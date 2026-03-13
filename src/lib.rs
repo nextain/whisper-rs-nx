@@ -55,6 +55,24 @@ pub type DtwAhead = whisper_rs_sys::whisper_ahead;
 /// The version of whisper.cpp that whisper-rs was linked with.
 pub static WHISPER_CPP_VERSION: &str = env!("WHISPER_CPP_VERSION");
 
+/// Load all available ggml backends (CUDA, Metal, Vulkan, etc.) via dynamic loading.
+///
+/// This scans the executable directory and current directory for backend shared libraries
+/// (e.g., `libggml-cuda.so`) and loads them via `dlopen`. Backends that are not found are
+/// silently skipped — no crash, no error.
+///
+/// Safe to call multiple times; only the first call has effect.
+///
+/// This is called automatically when creating a `WhisperContext` with `cuda-dynamic` feature,
+/// but can also be called manually for explicit control.
+pub fn load_dynamic_backends() {
+    use std::sync::Once;
+    static INIT: Once = Once::new();
+    INIT.call_once(|| {
+        unsafe { whisper_rs_sys::ggml_backend_load_all() };
+    });
+}
+
 /// Redirect all whisper.cpp and GGML logs to logging hooks installed by whisper-rs.
 ///
 /// This will stop most logs from being output to stdout/stderr and will bring them into

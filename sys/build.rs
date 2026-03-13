@@ -8,6 +8,7 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use std::process::Command;
 
 fn main() {
     let target = env::var("TARGET").unwrap();
@@ -48,7 +49,8 @@ fn main() {
             println!("cargo:rustc-link-lib=openblas");
         }
     }
-    #[cfg(feature = "cuda")]
+    // cuda-dynamic: do NOT link CUDA libraries — they are loaded at runtime via dlopen
+    #[cfg(all(feature = "cuda", not(feature = "cuda-dynamic")))]
     {
         println!("cargo:rustc-link-lib=cublas");
         println!("cargo:rustc-link-lib=cudart");
@@ -200,11 +202,13 @@ fn main() {
         config.define("WHISPER_COREML_ALLOW_FALLBACK", "1");
     }
 
-    if cfg!(feature = "cuda") {
+    if cfg!(feature = "cuda") && !cfg!(feature = "cuda-dynamic") {
+        // Static CUDA: build ggml-cuda into the main static library
         config.define("GGML_CUDA", "ON");
         config.define("CMAKE_POSITION_INDEPENDENT_CODE", "ON");
         config.define("CMAKE_CUDA_FLAGS", "-Xcompiler=-fPIC");
     }
+    // cuda-dynamic: main build is CPU-only; CUDA backend built separately as .so
 
     if cfg!(feature = "hipblas") {
         config.define("GGML_HIP", "ON");
@@ -281,6 +285,12 @@ fn main() {
             key.starts_with("WHISPER_") && key != "WHISPER_DONT_GENERATE_BINDINGS";
         let is_ggml_flag = key.starts_with("GGML_");
         let is_cmake_flag = key.starts_with("CMAKE_");
+
+        // cuda-dynamic: prevent GGML_CUDA from leaking into the main (CPU-only) build
+        if cfg!(feature = "cuda-dynamic") && key == "GGML_CUDA" {
+            continue;
+        }
+
         if is_whisper_flag || is_ggml_flag || is_cmake_flag {
             config.define(&key, &value);
         }
@@ -333,7 +343,7 @@ fn main() {
         println!("cargo:rustc-link-lib=static=ggml-metal");
     }
 
-    if cfg!(feature = "cuda") {
+    if cfg!(feature = "cuda") && !cfg!(feature = "cuda-dynamic") {
         println!("cargo:rustc-link-lib=static=ggml-cuda");
     }
 
@@ -343,6 +353,80 @@ fn main() {
 
     if cfg!(feature = "intel-sycl") {
         println!("cargo:rustc-link-lib=ggml-sycl");
+    }
+
+    // cuda-dynamic: build CUDA backend as a separate shared library (.so/.dll)
+    // This runs a second cmake pass to produce libggml-cuda.so, which gets loaded
+    // at runtime via ggml's dlopen infrastructure (ggml_backend_load_all).
+    #[cfg(feature = "cuda-dynamic")]
+    {
+        let cuda_build_dir = out.join("cuda-dynamic-build");
+        std::fs::create_dir_all(&cuda_build_dir).unwrap();
+
+        // Configure: build with CUDA enabled, shared libs, and dynamic backend loading
+        let mut cmake_args = vec![
+            format!("{}", whisper_root.display()),
+            "-DCMAKE_BUILD_TYPE=Release".to_string(),
+            "-DGGML_CUDA=ON".to_string(),
+            "-DBUILD_SHARED_LIBS=ON".to_string(),
+            "-DGGML_BACKEND_DL=ON".to_string(),
+            "-DGGML_NATIVE=OFF".to_string(),
+            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON".to_string(),
+            "-DWHISPER_BUILD_TESTS=OFF".to_string(),
+            "-DWHISPER_BUILD_EXAMPLES=OFF".to_string(),
+            "-DGGML_OPENMP=OFF".to_string(),
+        ];
+
+        // Pass through CUDA environment variables
+        if let Ok(cuda_path) = env::var("CUDA_PATH") {
+            cmake_args.push(format!("-DCMAKE_CUDA_COMPILER={}/bin/nvcc", cuda_path));
+        } else if let Ok(cudacxx) = env::var("CUDACXX") {
+            cmake_args.push(format!("-DCMAKE_CUDA_COMPILER={}", cudacxx));
+        }
+
+        let cmake_status = Command::new("cmake")
+            .args(&cmake_args)
+            .current_dir(&cuda_build_dir)
+            .status()
+            .expect("Failed to run cmake for cuda-dynamic build");
+        assert!(cmake_status.success(), "cmake configure for cuda-dynamic failed");
+
+        // Build only the ggml-cuda target
+        let build_status = Command::new("cmake")
+            .args(["--build", ".", "--target", "ggml-cuda", "--config", "Release", "-j"])
+            .current_dir(&cuda_build_dir)
+            .status()
+            .expect("Failed to build cuda-dynamic target");
+        assert!(build_status.success(), "cmake build for cuda-dynamic (ggml-cuda) failed");
+
+        // Find the built libggml-cuda.so
+        let cuda_so = find_file_recursive(&cuda_build_dir, "libggml-cuda");
+        let cuda_so = cuda_so.expect("Could not find libggml-cuda.so after cuda-dynamic build");
+
+        // Also find libggml-base.so (required by ggml-cuda MODULE at runtime)
+        let base_so = find_file_recursive(&cuda_build_dir, "libggml-base.so.");
+        // Fall back to non-versioned name
+        let base_so = base_so.or_else(|| find_file_recursive(&cuda_build_dir, "libggml-base.so"));
+
+        // Export paths via cargo metadata so consuming crates can bundle these files
+        println!("cargo:metadata=cuda_dynamic_so={}", cuda_so.display());
+        if let Some(ref base) = base_so {
+            println!("cargo:metadata=cuda_dynamic_base_so={}", base.display());
+            // Also find versioned symlink targets
+            let base_dir = base.parent().unwrap();
+            for entry in std::fs::read_dir(base_dir).unwrap() {
+                let entry = entry.unwrap();
+                let name = entry.file_name().to_string_lossy().to_string();
+                if name.starts_with("libggml-base.so") {
+                    println!("cargo:metadata=cuda_dynamic_base_lib={}", entry.path().display());
+                }
+            }
+        }
+
+        println!("cargo:warning=cuda-dynamic: CUDA backend built at {}", cuda_so.display());
+        if let Some(ref base) = base_so {
+            println!("cargo:warning=cuda-dynamic: ggml-base shared lib at {}", base.display());
+        }
     }
 
     println!(
@@ -377,6 +461,28 @@ fn add_link_search_path(dir: &std::path::Path) -> std::io::Result<()> {
         }
     }
     Ok(())
+}
+
+fn find_file_recursive(dir: &std::path::Path, name_prefix: &str) -> Option<PathBuf> {
+    if !dir.is_dir() {
+        return None;
+    }
+    for entry in std::fs::read_dir(dir).ok()? {
+        let entry = entry.ok()?;
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(fname) = path.file_name().and_then(|n| n.to_str()) {
+                if fname.starts_with(name_prefix) && !fname.ends_with(".o") {
+                    return Some(path);
+                }
+            }
+        } else if path.is_dir() {
+            if let Some(found) = find_file_recursive(&path, name_prefix) {
+                return Some(found);
+            }
+        }
+    }
+    None
 }
 
 fn get_whisper_cpp_version(whisper_root: &std::path::Path) -> std::io::Result<Option<String>> {

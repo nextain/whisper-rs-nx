@@ -50,6 +50,10 @@ impl WhisperInnerContext {
         path: &Path,
         parameters: WhisperContextParameters,
     ) -> Result<Self, WhisperError> {
+        // With cuda-dynamic, load backends (CUDA, etc.) before creating context
+        #[cfg(feature = "cuda-dynamic")]
+        crate::load_dynamic_backends();
+
         let path_cstr = CString::new(path_to_bytes(path)?)?;
         let ctx = unsafe {
             whisper_rs_sys::whisper_init_from_file_with_params_no_state(
@@ -78,6 +82,10 @@ impl WhisperInnerContext {
         buffer: &[u8],
         parameters: WhisperContextParameters,
     ) -> Result<Self, WhisperError> {
+        // With cuda-dynamic, load backends (CUDA, etc.) before creating context
+        #[cfg(feature = "cuda-dynamic")]
+        crate::load_dynamic_backends();
+
         let ctx = unsafe {
             whisper_rs_sys::whisper_init_from_buffer_with_params_no_state(
                 buffer.as_ptr() as _,
