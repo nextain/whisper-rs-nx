@@ -356,8 +356,9 @@ fn main() {
     }
 
     // cuda-dynamic: build CUDA backend as a separate shared library (.so/.dll)
-    // This runs a second cmake pass to produce libggml-cuda.so, which gets loaded
-    // at runtime via ggml's dlopen infrastructure (ggml_backend_load_all).
+    // This runs a second cmake pass to produce libggml-cuda.so (or ggml-cuda.dll on Windows),
+    // which gets loaded at runtime via ggml's dlopen/LoadLibrary infrastructure (ggml_backend_load_all).
+    // NOTE: Windows support is untested — file search patterns added but not verified on MSVC builds.
     #[cfg(feature = "cuda-dynamic")]
     {
         let cuda_build_dir = out.join("cuda-dynamic-build");
@@ -399,25 +400,35 @@ fn main() {
             .expect("Failed to build cuda-dynamic target");
         assert!(build_status.success(), "cmake build for cuda-dynamic (ggml-cuda) failed");
 
-        // Find the built libggml-cuda.so
-        let cuda_so = find_file_recursive(&cuda_build_dir, "libggml-cuda");
-        let cuda_so = cuda_so.expect("Could not find libggml-cuda.so after cuda-dynamic build");
+        // Find the built CUDA backend shared library
+        // Linux: libggml-cuda.so, Windows: ggml-cuda.dll
+        let is_windows = target.contains("windows");
+        let cuda_lib_prefix = if is_windows { "ggml-cuda" } else { "libggml-cuda" };
+        let cuda_so = find_file_recursive(&cuda_build_dir, cuda_lib_prefix);
+        let cuda_so = cuda_so.unwrap_or_else(|| panic!(
+            "Could not find {} after cuda-dynamic build", cuda_lib_prefix
+        ));
 
-        // Also find libggml-base.so (required by ggml-cuda MODULE at runtime)
-        let base_so = find_file_recursive(&cuda_build_dir, "libggml-base.so.");
-        // Fall back to non-versioned name
-        let base_so = base_so.or_else(|| find_file_recursive(&cuda_build_dir, "libggml-base.so"));
+        // Also find ggml-base shared lib (required by ggml-cuda MODULE at runtime)
+        // Linux: libggml-base.so(.version), Windows: ggml-base.dll
+        let base_so = if is_windows {
+            find_file_recursive(&cuda_build_dir, "ggml-base.dll")
+        } else {
+            find_file_recursive(&cuda_build_dir, "libggml-base.so.")
+                .or_else(|| find_file_recursive(&cuda_build_dir, "libggml-base.so"))
+        };
 
         // Export paths via cargo metadata so consuming crates can bundle these files
         println!("cargo:metadata=cuda_dynamic_so={}", cuda_so.display());
         if let Some(ref base) = base_so {
             println!("cargo:metadata=cuda_dynamic_base_so={}", base.display());
-            // Also find versioned symlink targets
+            // Also find versioned symlink targets (Linux only; Windows has no versioned .dll)
             let base_dir = base.parent().unwrap();
+            let base_prefix = if is_windows { "ggml-base.dll" } else { "libggml-base.so" };
             for entry in std::fs::read_dir(base_dir).unwrap() {
                 let entry = entry.unwrap();
                 let name = entry.file_name().to_string_lossy().to_string();
-                if name.starts_with("libggml-base.so") {
+                if name.starts_with(base_prefix) {
                     println!("cargo:metadata=cuda_dynamic_base_lib={}", entry.path().display());
                 }
             }
