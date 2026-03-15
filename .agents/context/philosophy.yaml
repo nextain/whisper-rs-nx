@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Core philosophy of whisper-rs-nx.
+# This is the "why" — separated from "what" (architecture) and "how" (workflows).
+
+version: 1
+
+principles:
+  ai_native_development:
+    title: "AI-Native Development"
+    statement: "AI-assisted contributions are the norm, not the exception"
+    details:
+      - "We do not manually rewrite AI code to satisfy anti-AI policies"
+      - "Rich .agents/ context ensures high-quality AI contributions"
+      - "AI context files are first-class project infrastructure"
+
+  privacy_first:
+    title: "Privacy First"
+    statement: "Local execution by default — cloud is opt-in"
+    details:
+      - "whisper.cpp runs locally — no cloud API needed"
+      - "cuda-dynamic allows GPU acceleration without mandatory CUDA install"
+      - "CPU fallback ensures the library works everywhere"
+
+  transparency:
+    title: "Transparency"
+    statement: "Open source — verify by reading the code"
+    details:
+      - "Source code is Apache 2.0"
+      - "AI context is open and forkable (CC-BY-SA 4.0)"
+      - "Upstream attribution chain preserved (Unlicense → Apache 2.0)"
+
+  assembly_philosophy:
+    title: "Assembly over Invention"
+    statement: "Compose from proven components — don't reinvent"
+    details:
+      - "whisper.cpp is the proven STT engine — we provide Rust bindings"
+      - "bindgen + cmake for build system — standard Rust FFI toolchain"
+      - "Follow upstream whisper.cpp releases, don't diverge unnecessarily"
+
+  ecosystem_integration:
+    title: "Ecosystem Integration"
+    statement: "Part of the Naia OS ecosystem — speech-to-text for AI companions"
+    details:
+      - "Provides STT capability for Naia OS AI avatar"
+      - "Designed for embedding in larger Rust applications"
+      - "Single-binary deployment (cuda-dynamic avoids CUDA SDK dependency)"
+
+  vibe_coding_era:
+    title: "Vibe Coding Era"
+    statement: "AI context files are the new contribution infrastructure"
+    details:
+      - ".agents/ directories encode project philosophy, not just config"
+      - "Context quality determines AI collaboration quality"
+      - "Triple-mirror architecture: AI-optimized + English + Korean"
+      - "CC-BY-SA licensing preserves the contribution chain"
+
+mirrors:
+  korean: ".users/context/ko/philosophy.md"
+  english: ".users/context/philosophy.md"

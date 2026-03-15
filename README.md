@@ -1,105 +1,65 @@
-# whisper-rs
+# whisper-rs-nx
 
-Rust bindings to [whisper.cpp](https://github.com/ggerganov/whisper.cpp/)
+Rust bindings to [whisper.cpp](https://github.com/ggerganov/whisper.cpp/) — **Nextain fork** with cross-platform and GPU improvements.
+
+Forked from [whisper-rs](https://codeberg.org/tazz4843/whisper-rs) (Unlicense).
+
+## Improvements over upstream
+
+| Feature | Upstream | whisper-rs-nx |
+|---------|----------|---------------|
+| **cuda-dynamic** | Not available | Runtime CUDA loading via dlopen/LoadLibrary — single binary works with or without GPU |
+| **Windows MSVC** | Fails (Linux struct bindings) | Builds cleanly with bindgen 0.72 + LLVM |
+| **Windows DLL** | Not supported | cuda-dynamic finds and loads `ggml-cuda.dll` on Windows |
+| **CPU fallback** | Requires compile-time CUDA decision | GPU available = CUDA; no GPU = CPU. Automatic at runtime |
+
+## Why this fork exists
+
+This project is part of [Naia OS](https://github.com/nextain/naia-os), an AI-context-driven open source project. Our development methodology relies on AI-assisted coding with full context engineering (`.agents/`, `.users/`, `CLAUDE.md`).
+
+The upstream whisper-rs project does not accept AI-assisted contributions. We respect that policy, but our project philosophy requires AI-context-based development — we do not rewrite AI-generated code manually to satisfy upstream policies. Therefore, this is a permanent independent fork.
 
 ## Usage
 
-```bash
-git clone --recursive https://codeberg.org/tazz4843/whisper-rs.git
-
-cd whisper-rs
-
-cargo run --example basic_use
-
-cargo run --example audio_transcription
+```toml
+[dependencies]
+whisper-rs = { package = "whisper-rs-nx", git = "https://github.com/nextain/whisper-rs-nx.git" }
 ```
+
+The `package` alias lets you use `whisper_rs` in your Rust code without any changes:
 
 ```rust
 use whisper_rs::{WhisperContext, WhisperContextParameters, FullParams, SamplingStrategy};
-
-fn main() {
-    let path_to_model = std::env::args().nth(1).unwrap();
-
-    // load a context and model
-    let ctx = WhisperContext::new_with_params(
-        path_to_model,
-        WhisperContextParameters::default()
-    ).expect("failed to load model");
-
-    // create a params object
-    let params = FullParams::new(SamplingStrategy::BeamSearch {
-        beam_size: 5,
-        patience: -1.0,
-    });
-
-    // assume we have a buffer of audio data
-    // here we'll make a fake one, floating point samples, 32 bit, 16KHz, mono
-    let audio_data = vec![0_f32; 16000 * 2];
-
-    // now we can run the model
-    let mut state = ctx.create_state().expect("failed to create state");
-    state
-        .full(params, &audio_data[..])
-        .expect("failed to run model");
-
-    // fetch the results
-    for segment in state.as_iter() {
-        println!(
-            "[{} - {}]: {}",
-            // note start and end timestamps are in centiseconds
-            // (10s of milliseconds)
-            segment.start_timestamp(),
-            segment.end_timestamp(),
-            // the Display impl for WhisperSegment will replace invalid UTF-8 with the Unicode replacement character
-            segment
-        );
-    }
-}
 ```
 
-See [examples/basic_use.rs](examples/basic_use.rs) for more details.
+### Features
 
-Lower level bindings are exposed if needed, but the above should be enough for most use cases.
-See the docs: https://docs.rs/whisper-rs/ for more details.
+```toml
+# CPU-only (default, works everywhere)
+whisper-rs = { package = "whisper-rs-nx", git = "https://github.com/nextain/whisper-rs-nx.git" }
 
-## Feature flags
+# Runtime CUDA loading (single binary, GPU used if available)
+whisper-rs = { package = "whisper-rs-nx", git = "https://github.com/nextain/whisper-rs-nx.git", features = ["cuda-dynamic"] }
 
-All disabled by default unless otherwise specified.
+# Static CUDA linking (requires CUDA toolkit at build time)
+whisper-rs = { package = "whisper-rs-nx", git = "https://github.com/nextain/whisper-rs-nx.git", features = ["cuda"] }
+```
 
-* `raw-api`: expose whisper-rs-sys without having to pull it in as a dependency.
-  **NOTE**: enabling this no longer guarantees semver compliance,
-  as whisper-rs-sys may be upgraded to a breaking version in a patch release of whisper-rs.
-* `cuda`: enable CUDA support. Implicitly enables hidden GPU flag at runtime.
-* `hipblas`: enable ROCm/hipBLAS support. Only available on linux. Implicitly enables hidden GPU flag at runtime.
-* `openblas`: enable OpenBLAS support.
-* `metal`: enable Metal support. Implicitly enables hidden GPU flag at runtime.
-* `vulkan`: enable Vulkan support. Implicitly enables hidden GPU flag at runtime.
-* `log_backend`: allows hooking into whisper.cpp's log output and sending it to the `log` backend. Requires calling
-* `tracing_backend`: allows hooking into whisper.cpp's log output and sending it to the `tracing` backend.
+### Build requirements
 
-## Building
-
-See [BUILDING.md](BUILDING.md) for instructions for building whisper-rs on Windows and OSX M1. Linux builds should just
-work out of the box.
-
-## Troubleshooting
-
-* Something other than Windows/macOS/Linux isn't working!
-    * I don't have a way to test these platforms, so I can't really help you.
-        * If you can get it working, please open a PR with any changes to make it work and build instructions in
-          BUILDING.md!
-* I get a panic during binding generation build!
-    * You can attempt to fix it yourself, or you can set the `WHISPER_DONT_GENERATE_BINDINGS` environment variable.
-      This skips attempting to build the bindings whatsoever and copies the existing ones. They may be out of date,
-      but it's better than nothing.
-        * `WHISPER_DONT_GENERATE_BINDINGS=1 cargo build`
-    * If you can fix the issue, please open a PR!
+| Platform | Requirements |
+|----------|-------------|
+| Linux | `libclang-dev`, `cmake`, C++ compiler |
+| Windows | LLVM (`winget install LLVM.LLVM`), CMake, VS Build Tools 2022 |
 
 ## License
 
-[Unlicense](LICENSE)
+- **Source code**: Apache 2.0
+- **AI context** (`.agents/`, `.users/`, `CLAUDE.md`): CC-BY-SA 4.0
+- **Original upstream code**: Unlicense (public domain)
 
-tl;dr: code is in the public domain
+See [LICENSE](LICENSE) for details.
 
-[the PR template](./.github/PULL_REQUEST_TEMPLATE.md) is derived from
-[GoToSocial's PR template](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/.gitea/pull_request_template.md)
+## Contributing
+
+AI-assisted contributions are welcome. We use AI context engineering as a core development practice. See `CLAUDE.md` for project context.

@@ -1,0 +1,235 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Issue-Driven Development Cycle for whisper-rs-nx
+#
+# Code-centric development methodology for a fork-based Rust crate.
+#
+# Key insight: front-load user involvement (issue understanding, scope, plan),
+# then AI executes autonomously with built-in quality gates.
+#
+# Scope: Default for all feature-level work (new features, broad bug fixes).
+# For non-feature changes (typos, config values), use development-cycle.yaml.
+
+version: 1
+name: issue-driven-development
+mirror: ".users/workflows/issue-driven-development.md"  # planned — directory not yet created
+
+scope:
+  applies_to: "Default for all feature-level work"
+  includes:
+    - "New feature development"
+    - "Bug fixes that touch broadly-built features"
+    - "Build system changes"
+    - "New platform support"
+  unit: "Feature (may span multiple issues)"
+  not_for: "Non-feature changes (typos, config values) — use development-cycle.yaml"
+
+# ─── Principles ───────────────────────────────────────────────
+
+principles:
+  upstream_analysis_first:
+    rule: "Before writing code, fully understand how upstream implements the feature"
+    anti_pattern: "Guessing upstream behavior without reading the code"
+
+  minimal_modification:
+    rule: "Follow upstream's working flow, overlay customizations with minimal changes"
+    anti_pattern: "Rebuilding what upstream already provides"
+
+  no_guessing:
+    rule: "Never design based on assumptions — read the actual code"
+    anti_pattern: "Assuming behavior from docs or naming conventions alone"
+
+  no_symptom_patching:
+    rule: "Before stacking patches, verify you're on the correct path"
+    anti_pattern: "Fixing symptoms with 5 patches when 1 root-cause fix suffices"
+
+  no_autonomous_development:
+    rule: "Propose improvements to the user — never decide to build on your own"
+    anti_pattern: "Deciding 'this would be better' and implementing without asking"
+
+  working_code_preservation:
+    rule: "Never break working code by 'improving' or 'switching modes'"
+    anti_pattern: "Refactoring a working flow into a 'better' one that crashes"
+
+  test_as_diagnostic:
+    rule: "Tests are diagnostic tools — a failing test means 'investigate the bug', not 'fix the test to pass'"
+    anti_pattern: "Weakening assertions or deleting test cases to make tests pass"
+
+# ─── Iteration Termination Rule ───────────────────────────────
+
+iteration_rule:
+  description: "All loops in this workflow terminate only after TWO consecutive clean passes"
+  rationale: "A single clean pass can be a false negative."
+  applies_to: ["plan", "review", "post_test_review", "sync_verify"]
+
+# ─── Phases ───────────────────────────────────────────────────
+
+phases:
+
+  # ── User-Involved (front-loaded) ──────────────────────────
+
+  issue:
+    description: "Define or receive the issue"
+    steps:
+      - "Identify or create a GitHub Issue"
+      - "All subsequent artifacts link back to this Issue"
+    output: "GitHub Issue URL"
+
+  understand:
+    description: "Confirm understanding of the issue before investigating"
+    gate: true
+    steps:
+      - "Analyze the issue and summarize understanding"
+      - "Present to user: 'Is my understanding correct?'"
+      - "User confirms or corrects"
+    output: "Confirmed issue understanding"
+
+  scope:
+    description: "Define investigation scope and depth, with user approval"
+    gate: true
+    steps:
+      - "Propose scope (which files/crates/upstream code to examine)"
+      - "Propose depth for each scope area"
+      - "Present to user with rationale"
+      - "User confirms or adjusts"
+    output: "Confirmed scope and depth"
+
+    scope_levels:
+      L1: "Files to be directly modified"
+      L2: "Dependencies of L1 (imports, callers, callees)"
+      L3: "Upstream originals (how whisper-rs or whisper.cpp implements it)"
+
+  investigate:
+    description: "Code-centric investigation within confirmed scope"
+    steps:
+      - "loop:"
+      - "  - Read ALL code in scope (not just until first finding)"
+      - "  - List findings with evidence (file:line citations required)"
+      - "  - If TWO consecutive passes find nothing new → investigation complete"
+    rules:
+      - "NEVER stop at the first bug found — complete full scope review"
+      - "Every finding MUST cite specific code location (file:line)"
+      - "Code over docs — read actual implementation"
+    output: "Complete findings list with evidence"
+
+  plan:
+    description: "Comprehensive plan based on ALL findings"
+    gate: true
+    steps:
+      - "Draft plan addressing all findings"
+      - "Split phases by testable boundaries"
+      - "loop: re-read plan against findings, fix issues"
+      - "Present stable plan to user for approval"
+    output: "Approved implementation plan"
+
+  # ── AI-Autonomous (with quality gates) ────────────────────
+
+  build:
+    description: "Implement according to approved plan"
+    steps:
+      - "Implement changes per plan, one phase at a time"
+      - "After each phase: iterative code review + verification"
+      - "Follow TDD where applicable (RED → GREEN → REFACTOR)"
+    rules:
+      - "Stay within plan scope"
+      - "Follow upstream patterns, don't invent new ones"
+
+  review:
+    description: "Self-review against plan AND original issue"
+    checklist:
+      - "plan_compliance: Does the code implement every item in the plan?"
+      - "issue_resolution: Does it actually solve the original issue?"
+      - "scope_discipline: Are there changes beyond what was planned?"
+      - "working_code_preserved: Does it break anything that was working?"
+      - "upstream_pattern: Does it follow upstream conventions?"
+      - "side_effects: Could this change affect other parts unexpectedly?"
+      - "unsafe_review: Are unsafe blocks minimal, documented, and correct?"
+      - "unused_code: Are there unused imports or dead code paths?"
+
+  test:
+    description: "Run tests and verify build"
+    steps:
+      - "cargo build --all-features"
+      - "cargo test"
+      - "cargo clippy --all-targets --all-features -- -D warnings"
+      - "cargo fmt --check"
+    on_failure:
+      mandatory_first_step: "DIAGNOSE — read full test output before any code change"
+      then_route:
+        implementation_issue: "→ return to BUILD"
+        design_issue: "→ return to PLAN"
+        investigation_gap: "→ return to INVESTIGATE"
+
+  post_test_review:
+    description: "Re-review after tests pass"
+    steps:
+      - "Re-read ALL new/modified files (fresh eyes after testing)"
+      - "Review against same checklist as initial review"
+      - "TWO consecutive clean passes required"
+
+  sync:
+    description: "Synchronize contexts, record lessons"
+    gate: true
+    steps:
+      - "Check if .agents/ needs updates → update"
+      - "Check if .users/ needs updates → update (1:1 mirror)"
+      - "Check if entry points (CLAUDE.md/AGENTS.md/GEMINI.md) need updates"
+      - "Record lessons learned if applicable"
+      - "Present sync summary to user for confirmation"
+
+  sync_verify:
+    description: "Verify context updates are accurate and complete"
+    steps:
+      - "Re-read all updated context files"
+      - "Check accuracy against actual implementation"
+      - "Check mirror consistency (.agents/ ↔ .users/)"
+      - "TWO consecutive clean passes required"
+
+  report:
+    description: "Report results to user and Issue"
+    output: "Completion report"
+
+  commit:
+    description: "Commit and link to Issue"
+    prerequisite: "ALL prior phases must be complete"
+    steps:
+      - "Stage relevant files only"
+      - "Commit with descriptive message referencing Issue number"
+      - "Create PR linked to Issue"
+
+# ─── Gates ──────────────────────────────────────────────────
+
+gates:
+  - phase: understand
+    prompt: "Is my understanding of this issue correct?"
+  - phase: scope
+    prompt: "I propose investigating scope L{n} / depth {level}. Does this look right?"
+  - phase: plan
+    prompt: "Here is my implementation plan. Shall I proceed?"
+  - phase: sync
+    prompt: "Here are the context updates from this work. Please review."
+
+# ─── Git Integration ─────────────────────────────────────────
+
+git_integration:
+  issue: "Each cycle starts from a GitHub Issue"
+  branch_naming: "issue-{number}-{short-description}"
+  isolation:
+    worktree:
+      when: "Concurrent work (multiple issues active)"
+      command: "git worktree add ../whisper-rs-nx-issue-{N}-{desc} issue-{N}-{desc}"
+    branch_only:
+      when: "Solo work — only one issue at a time"
+      command: "git checkout -b issue-{N}-{desc}"
+
+# ─── Language Principle ──────────────────────────────────────
+
+language:
+  public:
+    scope: "Git commits, Issue comments, PR titles, context files"
+    language: "English"
+  private:
+    scope: "work-logs/, personal notes"
+    language: "Contributor's preferred language"
+  ai_responses:
+    language: "Contributor's preferred language"

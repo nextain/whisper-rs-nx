@@ -1,0 +1,131 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Testing strategy for whisper-rs-nx
+
+description: Testing strategy for a Rust FFI crate wrapping whisper.cpp
+
+philosophy: |
+  Integration-first. Test real behavior, not mocked internals.
+  The sys crate is tested via build verification (cmake + bindgen).
+  The high-level crate is tested via cargo test with real whisper.cpp calls.
+
+test_code_review:
+  rule: "Test code MUST be iteratively reviewed before trusting results. Faulty test logic masks real bugs."
+  process:
+    - "Write test → review test code (assertions correct? target accurate? edge cases covered?)"
+    - "Fix issues → re-review → repeat until TWO consecutive clean passes"
+    - "Only then run the test"
+    - "After pass: re-confirm 'does this test actually validate the intended behavior?'"
+
+test_attitude:
+  rule: "Tests are diagnostic tools, not scoreboards."
+  anti_patterns:
+    - name: "Assertion loosening"
+      description: "Changing assertions to make a failing test pass without investigating root cause"
+      correct: "Read full error output, diagnose whether failure is in app code or test code, fix the actual source"
+    - name: "Expected value gaming"
+      description: "Updating expected values to match the (buggy) actual output"
+      correct: "If actual output is wrong, fix the code that produces it, not the expectation"
+    - name: "Test deletion"
+      description: "Deleting or skipping a failing test instead of fixing the code it covers"
+      correct: "Investigate why the test fails, fix code, keep the test"
+
+layers:
+  sys_crate:
+    description: "whisper-rs-nx-sys — FFI bindings"
+    test_approach: "Build verification — if cmake + bindgen succeed, bindings are correct"
+    tests:
+      - "cargo build -p whisper-rs-nx-sys (compile check)"
+      - "cargo build -p whisper-rs-nx-sys --features cuda-dynamic (feature gate check)"
+    platforms:
+      - "Linux x86_64 (primary)"
+      - "Windows x86_64 MSVC"
+
+  high_level_crate:
+    description: "whisper-rs-nx — high-level API"
+    test_approach: "Integration tests with real whisper.cpp inference"
+    tests:
+      - name: "Context creation"
+        description: "WhisperContext::new() with a model file"
+        prerequisite: "Requires a .bin model file (not committed — download separately)"
+      - name: "Full transcription"
+        description: "Load audio → run inference → verify text output"
+        prerequisite: "Requires model file + audio sample"
+      - name: "Parameter configuration"
+        description: "FullParams construction with various settings"
+        prerequisite: "None (no model needed)"
+      - name: "GPU fallback"
+        description: "use_gpu=true on CPU-only machine → graceful fallback"
+        prerequisite: "None"
+
+  feature_gating:
+    description: "Feature flag combinations"
+    tests:
+      - "Default (CPU-only) build"
+      - "cuda-dynamic feature build"
+      - "Cross-platform build (Linux + Windows)"
+
+test_commands:
+  build_check: "cargo build"
+  build_check_sys: "cargo build -p whisper-rs-nx-sys"
+  test_all: "cargo test"
+  test_with_cuda: "cargo test --features cuda-dynamic"
+  clippy: "cargo clippy --all-targets --all-features -- -D warnings"
+  fmt_check: "cargo fmt --check"
+
+ci_pipeline:
+  on_push:
+    - "cargo fmt --check"
+    - "cargo clippy --all-targets --all-features -- -D warnings"
+    - "cargo build"
+    - "cargo build --features cuda-dynamic"
+    - "cargo test"
+  on_pr:
+    - "All above"
+    - "Windows MSVC build check"
+
+code_review:
+  description: "Review process for code changes"
+
+  automated_checks:
+    - name: "Format"
+      tool: "rustfmt"
+      command: "cargo fmt --check"
+      blocks_merge: true
+
+    - name: "Lint"
+      tool: "clippy"
+      command: "cargo clippy --all-targets --all-features -- -D warnings"
+      blocks_merge: true
+
+    - name: "Build"
+      command: "cargo build --all-features"
+      blocks_merge: true
+
+    - name: "Tests"
+      command: "cargo test"
+      blocks_merge: true
+
+    - name: "Security scan"
+      tool: "cargo audit"
+      command: "cargo audit"
+      blocks_merge: false
+      note: "Advisory only"
+
+  human_review_checklist:
+    always:
+      - "Does the change match the stated intent? (no scope creep)"
+      - "Are tests added for new behavior?"
+      - "Are commit messages following convention?"
+    ffi_changes:
+      - "Does bindgen config handle all platforms?"
+      - "Are new whisper.cpp functions properly wrapped in safe Rust?"
+      - "Is memory safety preserved (lifetime management, null checks)?"
+    build_system_changes:
+      - "Does cmake configuration work on Linux and Windows?"
+      - "Are feature flags properly gated?"
+      - "No hardcoded paths or platform assumptions?"
+
+mirrors:
+  english: ".users/context/testing.md"
+  korean: ".users/context/ko/testing.md"

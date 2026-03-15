@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Architecture context for whisper-rs-nx
+
+project:
+  name: whisper-rs-nx
+  nature: "Rust bindings for whisper.cpp — Nextain fork"
+  upstream: "https://codeberg.org/tazz4843/whisper-rs"
+  upstream_license: Unlicense
+  fork_reason: "Upstream does not accept AI-assisted contributions"
+  philosophy: "AI-context-driven development. No manual rewrites to satisfy anti-AI policies."
+  ecosystem: "Part of Naia OS ecosystem — provides speech-to-text for the AI companion"
+
+crates:
+  whisper-rs-nx:
+    path: "."
+    description: "High-level Rust API for whisper.cpp"
+    alias: "whisper-rs (via Cargo package alias)"
+  whisper-rs-nx-sys:
+    path: "sys/"
+    description: "FFI bindings (bindgen + cmake)"
+    alias: "whisper-rs-sys (via Cargo package alias)"
+
+improvements_over_upstream:
+  cuda-dynamic:
+    commit: "83911ba"
+    description: "Runtime CUDA loading via dlopen/LoadLibrary"
+    benefit: "Single binary works with or without GPU"
+    platforms: [linux, windows]
+    linux_verified: true
+    windows_verified: "build only (no GPU test machine)"
+
+  windows-msvc:
+    commit: "ab97b92"
+    description: "Windows MSVC build support"
+    changes:
+      - "bindgen 0.72 with rust_target generates Windows-safe bindings"
+      - "cuda-dynamic DLL search patterns for Windows"
+    verified: true
+
+  cpu-fallback:
+    description: "GPU unavailable → automatic CPU inference"
+    mechanism: "WhisperContext::new_with_params(use_gpu=true) fails → retry with use_gpu=false"
+    verified: "build only (runtime test pending)"
+
+build_system:
+  type: "cmake + bindgen + cargo"
+  sys_crate_build:
+    steps:
+      - "cmake compiles whisper.cpp C/C++ code"
+      - "bindgen generates Rust FFI bindings from whisper.h"
+      - "cargo links the compiled static library"
+  features:
+    default: "CPU-only build"
+    cuda-dynamic: "Enables runtime CUDA loading (no CUDA SDK needed at build time)"
+
+build_requirements:
+  all_platforms: ["cmake", "C++ compiler"]
+  linux: ["libclang-dev"]
+  windows: ["LLVM (winget install LLVM.LLVM)", "VS Build Tools 2022"]
+
+directory_structure:
+  root:
+    - "src/ — High-level Rust API (WhisperContext, FullParams, etc.)"
+    - "sys/ — FFI sys crate (bindgen + cmake build)"
+    - "sys/whisper.cpp/ — git submodule (upstream whisper.cpp)"
+    - "examples/ — Usage examples"
+    - "build.rs — Workspace-level build script"
+    - ".agents/ — AI context (YAML, CC-BY-SA-4.0)"
+    - ".users/ — Human-readable mirrors (Markdown, CC-BY-SA-4.0)"
+
+mirrors:
+  english: ".users/context/architecture.md"
+  korean: ".users/context/ko/architecture.md"

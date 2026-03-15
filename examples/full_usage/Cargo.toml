@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 hound = "3"
-whisper-rs = { path = "../.." }
+whisper-rs = { package = "whisper-rs-nx", path = "../.." }

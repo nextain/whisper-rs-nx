@@ -1,0 +1,155 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Development cycle for whisper-rs-nx
+#
+# Prevents code duplication, zombie code, and unreviewed drift.
+# Every AI coding session follows this cycle. No exceptions.
+
+description: |
+  Development cycle that prevents code duplication, zombie code, and unreviewed drift.
+  Every AI coding session follows this cycle. No exceptions.
+
+cycle:
+  name: "PLAN > CHECK > BUILD > VERIFY > CLEAN > COMMIT"
+
+  step_1_plan:
+    name: "PLAN"
+    description: "Determine what to build, where to put it, and whether it already exists"
+    actions:
+      - "Summarize requirement in one sentence"
+      - "Search existing code for same/similar functionality (Grep/Glob)"
+      - "If exists: modify/extend existing code (do NOT create new)"
+      - "If not: decide which crate (whisper-rs-nx or whisper-rs-nx-sys) it belongs to"
+      - "List affected files"
+    output: "Work plan (what, where, why)"
+    anti_patterns:
+      - "Creating new file without checking existing code"
+      - "Writing temp code with 'clean up later' intent"
+
+  step_2_check:
+    name: "CHECK"
+    description: "Pre-check for conflicts and duplication with existing code"
+    actions:
+      - "Read files to be changed, understand current state"
+      - "Check import/dependency graph (who uses this code?)"
+      - "Search for same-named functions/types elsewhere"
+      - "Verify test files exist"
+    output: "No conflicts/duplicates confirmed, or plan changed to modify existing code"
+
+  step_3_build:
+    name: "BUILD"
+    description: "Implement with TDD. Minimum only."
+    actions:
+      - "Write test first (RED)"
+      - "Minimal code to pass (GREEN)"
+      - "Refactor (REFACTOR)"
+    rules:
+      - "One feature at a time. Never mix multiple features."
+      - "Minimize new files. Add to existing files when possible."
+      - "Temp code must have // TODO: comment + issue number"
+    anti_patterns:
+      - "Implementing without tests"
+      - "Mixing multiple features in one PR"
+
+  step_4_verify:
+    name: "VERIFY"
+    description: "Confirm implementation is correct"
+    actions:
+      - "cargo test passes"
+      - "cargo clippy --all-targets --all-features -- -D warnings passes"
+      - "cargo fmt --check passes"
+      - "Review changed files (git diff --stat)"
+      - "Check for unintended file changes"
+      - "MUST actually build — clippy alone is NOT verification"
+    output: "Changes are within intended scope"
+    anti_patterns:
+      - "Committing with failing tests"
+      - "Missing unintended file changes"
+
+  step_5_clean:
+    name: "CLEAN"
+    description: "Remove previous implementation remnants, unused code"
+    actions:
+      - "Delete previous implementation code if replaced"
+      - "Remove unused imports"
+      - "Remove unused functions/variables"
+      - "Remove resolved TODO comments"
+    output: "No unnecessary code remains"
+
+  step_6_commit:
+    name: "COMMIT"
+    description: "Clean commit. One commit = one logical change."
+    actions:
+      - "Final check with git status"
+      - "Stage only related files (git add per-file)"
+      - "Commit message: type(scope): description"
+    rules:
+      - "One commit per feature/fix"
+      - "No WIP commits"
+      - "Double-check with git diff before committing"
+
+review_gates:
+  description: "Gates that must pass before code reaches main"
+
+  gate_1_self_review:
+    when: "Before commit"
+    checklist:
+      - "Stayed within scope defined in PLAN?"
+      - "If new file created, could it have been added to existing file?"
+      - "No duplicate code?"
+      - "No unused code left behind?"
+      - "Tests added?"
+      - "Safe Rust wrappers for unsafe FFI calls?"
+
+  gate_2_automated:
+    when: "On PR creation (CI)"
+    checks:
+      - "cargo fmt --check"
+      - "cargo clippy --all-targets --all-features -- -D warnings"
+      - "cargo build"
+      - "cargo build --features cuda-dynamic"
+      - "cargo test"
+      - "cargo audit (advisory)"
+
+  gate_3_human_review:
+    when: "Before PR merge"
+    focus:
+      code_quality:
+        - "No duplicate code"
+        - "No unused imports/functions/files"
+        - "No zombie code from previous implementation"
+      safety:
+        - "Unsafe blocks properly documented and minimal"
+        - "FFI lifetime management correct"
+        - "Null pointer checks on C returns"
+        - "No memory leaks in FFI boundary"
+      build_system:
+        - "cmake changes work on Linux and Windows"
+        - "Feature flags properly gated"
+        - "No hardcoded platform paths"
+
+ai_specific_rules:
+  description: "Additional rules for AI pair programming"
+
+  before_coding:
+    - "Read existing code first (Read before Write)"
+    - "Search if same feature already exists"
+    - "Define clear scope (one feature at a time)"
+
+  during_coding:
+    - "Minimize new file creation"
+    - "Always search before adding util functions"
+    - "Temp code = TODO comment required"
+
+  after_coding:
+    - "Review changed file list"
+    - "Remove previous implementation remnants"
+    - "Verify tests pass"
+    - "Report failures explicitly — never present uncertain state as success"
+
+  session_handoff:
+    description: "Cleanup when ending AI session"
+    actions:
+      - "Commit completed work"
+      - "Incomplete work: TODO comment + work log entry"
+      - "Never: commit half-built code"

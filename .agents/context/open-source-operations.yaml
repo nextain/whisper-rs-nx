@@ -1,0 +1,141 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# AI-Native Open Source Operations Model for whisper-rs-nx
+# How this project operates as an AI-native open source Rust crate.
+#
+# Related: contributing.yaml (code-level rules), philosophy.yaml
+
+version: 1
+
+# ─── Core Position ───────────────────────────────────────────
+
+position:
+  statement: "Design WITH AI, not defend AGAINST AI"
+  context: |
+    Most open source projects in 2025-2026 are defending against AI contributions.
+    whisper-rs-nx takes the opposite approach: structurally embrace AI contributions
+    by making the project context so rich that AI-assisted contributions are high
+    quality by default. This fork exists precisely because upstream rejects AI work.
+  key_insight: "Rich .agents/ context → better AI understanding → higher contribution quality"
+
+# ─── Five Premises ───────────────────────────────────────────
+
+premises:
+  - id: minimum_environment
+    statement: "AI coding tool + Git integration is the minimum"
+    detail: "Contributors use Claude Code, Cursor, Windsurf, OpenCode, Gemini, etc."
+
+  - id: bilateral_ai
+    statement: "Both contributors and maintainers use AI"
+
+  - id: english_lingua_franca
+    statement: "Public sharing on Git is in English; private work logs in native language; AI translates"
+
+  - id: mixed_skill_levels
+    statement: "Beginners to experts; AI adapts guidance"
+
+  - id: communication_flow
+    statement: "Person → AI → Git (English) → AI → Person"
+
+# ─── Contribution Types ────────────────────────────────────
+
+contribution_types:
+  - id: code_pr
+    difficulty: medium-high
+    description: "Pick an issue, submit a PR (Rust code + tests)"
+    process_ref: "contributing.yaml code section"
+
+  - id: bug_report
+    difficulty: low
+    description: "Report build failures, runtime issues, platform incompatibilities"
+
+  - id: new_feature
+    difficulty: high
+    description: "Propose or implement new features (e.g., new whisper.cpp features)"
+    process: "Issue → discuss → fork → implement → PR"
+
+  - id: documentation
+    difficulty: low-medium
+    description: "Improve .users/context/ docs"
+
+  - id: context_contribution
+    difficulty: medium
+    description: "Improve .agents/ context files (equal value to code)"
+
+  - id: translation
+    difficulty: low
+    description: "Add .users/context/{lang}/ translations"
+
+  - id: security_report
+    difficulty: medium-high
+    description: "Report vulnerabilities via GitHub Security Advisory"
+
+# ─── Contributor Flow ───────────────────────────────────────
+
+contributor_flow:
+  onboarding:
+    steps:
+      - "Clone: git clone --recursive https://github.com/nextain/whisper-rs-nx.git"
+      - "Open with any AI coding tool"
+      - "Ask in native language: 'What is this project and how can I help?'"
+      - "AI reads .agents/ and explains"
+
+  code_contribution:
+    steps:
+      - "Check existing issues or create new one"
+      - "Set up workspace: branch issue-{number}-{short-description}"
+      - "Code with AI assistance (cargo build, cargo test, cargo clippy)"
+      - "Self-review with AI (contributing.yaml checklist)"
+      - "Submit PR (English title, AI attribution, focused PR)"
+
+# ─── Quality Strategy ──────────────────────────────────────
+
+quality_strategy:
+  approach: "Structure ensures quality, not gatekeeping"
+  layers:
+    - level: L1
+      name: "Context"
+      mechanism: ".agents/ directory"
+      purpose: "AI understands project before generating code"
+    - level: L2
+      name: "Automation"
+      mechanism: "CI gates (cargo build, cargo test, clippy, fmt)"
+      purpose: "Enforce baseline quality"
+    - level: L3
+      name: "Human Judgment"
+      mechanism: "Maintainer review"
+      purpose: "Architecture and direction decisions"
+
+# ─── AI Attribution Policy ─────────────────────────────────
+
+ai_attribution:
+  principle: "Transparent, not punitive"
+  rules:
+    - "AI usage is welcomed; transparency is appreciated"
+    - "Responsibility for AI-generated code lies with the contributor"
+    - "Attribution is recommended but not required"
+  git_trailer: "Assisted-by: {tool name}"
+
+# ─── Communication ─────────────────────────────────────────
+
+communication:
+  language_flow: "Person (native) → AI → Git (English) → AI → Person (native)"
+  channels:
+    - name: "GitHub Issues"
+      purpose: "Bugs, feature requests, questions"
+    - name: "GitHub PRs"
+      purpose: "Code/doc review"
+
+# ─── References ───────────────────────────────────────────
+
+references:
+  external:
+    - "Responsible Vibe Coding Manifesto (vibe-coding-manifesto.com)"
+    - "AGENTS.md standard (agents.md, Linux Foundation AAIF)"
+  internal:
+    - ".agents/context/contributing.yaml"
+    - ".agents/context/philosophy.yaml"
+
+mirrors:
+  english: ".users/context/open-source-operations.md"
+  korean: ".users/context/ko/open-source-operations.md"

@@ -1,0 +1,80 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Harness Engineering Context for whisper-rs-nx
+#
+# Mechanical enforcement of project rules via hooks,
+# progress files for session handoff, and quality gates.
+#
+# Concept: "Engineer the environment so the AI never repeats a mistake."
+
+version: 1
+name: harness-engineering
+mirror:
+  users: .users/context/harness.md
+  users_ko: .users/context/ko/harness.md
+
+overview:
+  principle: "Text rules get forgotten; mechanical enforcement doesn't."
+  pillars:
+    - name: hooks
+      description: "Claude Code PostToolUse hooks that intercept edits and commands in real-time"
+    - name: progress_files
+      description: "JSON session handoff files that survive context compaction and session boundaries"
+
+hooks:
+  location: .claude/hooks/
+  registration: .claude/settings.json
+  protocol:
+    input: "stdin JSON — { tool_name, tool_input, cwd, session_id }"
+    output: "stdout JSON — { reason, hookSpecificOutput: { hookEventName, additionalContext } }"
+    blocking: "Set decision: 'block' in output to prevent tool execution (PreToolUse only)"
+
+  sync_entry_points:
+    file: sync-entry-points.js
+    trigger: "PostToolUse on Edit|Write"
+    purpose: "Auto-sync CLAUDE.md ↔ AGENTS.md ↔ GEMINI.md"
+    behavior:
+      - "Detects when any entry point file is edited"
+      - "Copies content to the other two (if they exist)"
+      - "Only syncs to files that already exist"
+    enforces: "Entry point files must always be identical"
+
+  cascade_check:
+    file: cascade-check.js
+    trigger: "PostToolUse on Edit|Write"
+    purpose: "Remind agent about triple-mirror updates"
+    patterns:
+      - ".agents/context/*.yaml → remind .users/context/ + .users/context/ko/"
+      - ".users/context/*.md (not ko/) → remind .agents/ + .users/context/ko/"
+      - ".users/context/ko/*.md → remind .agents/ + .users/context/"
+    behavior: "Advisory (additionalContext), not blocking"
+
+progress_files:
+  location: .agents/progress/
+  format: JSON
+  gitignored: true
+  purpose: "Session handoff — survives context compaction and session boundaries"
+  schema:
+    issue: "GitHub Issue reference (e.g., '#5')"
+    title: "Short description of the work"
+    project: "whisper-rs-nx"
+    current_phase: "Current phase from development cycle"
+    decisions:
+      description: "Array of key decisions made during this work"
+      fields: [decision, rationale, date]
+    surprises:
+      description: "Unexpected findings during investigation/build"
+    blockers:
+      description: "Current blockers preventing progress"
+    updated_at: "ISO timestamp of last update"
+
+directory_structure:
+  committed:
+    - .claude/settings.json
+    - .claude/hooks/sync-entry-points.js
+    - .claude/hooks/cascade-check.js
+    - .agents/context/harness.yaml
+    - .agents/progress/.gitkeep
+  gitignored:
+    - ".claude/* (except settings.json and hooks/)"
+    - ".agents/progress/*.json"

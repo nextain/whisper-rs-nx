@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Lessons Learned for whisper-rs-nx
+#
+# Accumulated lessons from development cycles.
+# Read during INVESTIGATE phase. Written during SYNC phase.
+
+version: 1
+name: lessons-learned
+mirror:
+  users: .users/context/lessons-learned.md
+  users_ko: .users/context/ko/lessons-learned.md
+
+lessons:
+
+  - id: L001
+    date: "2026-03-15"
+    category: fork-management
+    title: "Upstream rejection of AI contributions motivated this fork"
+    problem: "Upstream whisper-rs (codeberg.org/tazz4843/whisper-rs) does not accept AI-assisted contributions. This blocks cuda-dynamic and Windows MSVC patches from being upstreamed."
+    root_cause: "Anti-AI contribution policy in upstream project."
+    fix: "Created permanent fork (whisper-rs-nx) with clear upstream attribution. Maintain our own release cycle."
+    reference: "README.md fork rationale"
+
+  - id: L002
+    date: "2026-03-15"
+    category: build-system
+    title: "Pre-generated bindings break cross-platform builds"
+    problem: "Upstream ships pre-generated Linux bindings in sys/src/bindings.rs. These contain Linux-specific structs that fail on Windows MSVC."
+    root_cause: "bindgen output is platform-specific. Pre-generated bindings assume Linux."
+    fix: "Updated to bindgen 0.72 with rust_target config. Bindings are generated at build time on each platform."
