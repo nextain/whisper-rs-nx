@@ -13,9 +13,10 @@
 - **카테고리**: 포크 관리
 - **문제**: upstream에 cuda-dynamic PR 제출. (1) AI 정책 위반과 (2) 코드 품질 문제로 거절됨 — 메인테이너가 "atrocious quality", "obviously LLM generated"로 평가.
 - **근본 원인**: upstream의 no-AI 정책 + upstream 기여 컨벤션을 따르지 않은 코드.
-- **해결**: upstream.yaml (실제 코드 기반 upstream 컨벤션), PreToolUse 훅 (cargo fmt/clippy 강제), upstream_style_review 워크플로우 단계를 포함한 영구 포크 생성. AI 지원 개발을 허용하면서 upstream 코드 품질 기준을 강제.
-- **메인테이너가 지적한 것**: 기여 템플릿 미준수, 코드 스타일 이탈, AI 생성을 드러내는 패턴 (과도한 문서화, 불필요한 추상화).
-- **포크의 대응**: 실제 코드 분석 기반 upstream.yaml, PreToolUse 블로커, 의미론적 리뷰 단계, diff 최소화 추적.
+- **즉각 대응**: AI 지원 개발을 허용하는 영구 포크 생성. 포크 시점에는 upstream 컨벤션 분석이 존재하지 않았음 — upstream 스타일 검증 없이 코드 작성.
+- **메인테이너가 지적한 것**: 기여 템플릿 미준수, 코드 스타일 이탈, AI 생성을 드러내는 패턴 (과도한 문서화, 불필요한 추상화, 하드코딩 경로, 혼합된 접근법).
+- **사후 수정 (2026-03-16, 비판적 리뷰 후)**: upstream.yaml (실제 코드 분석), PreToolUse 훅 (cargo fmt/clippy 블로커), upstream_style_review 워크플로우, 안티패턴 섹션, diff 최소화 추적. 원래 실패 시점에는 존재하지 않았음.
+- **미해결 코드 위반**: V1-V10 식별되었으나 미수정 (#63 구현 시 처리 예정).
 
 ## L002 — 사전 생성된 바인딩이 크로스 플랫폼 빌드를 깨뜨림
 

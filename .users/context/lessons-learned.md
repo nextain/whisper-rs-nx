@@ -13,9 +13,10 @@ Accumulated lessons from development cycles.
 - **Category**: Fork management
 - **Problem**: Submitted cuda-dynamic PR to upstream. Rejected for (1) AI policy violation and (2) code quality issues — maintainer described it as "atrocious quality" and "obviously LLM generated".
 - **Root cause**: Two issues — upstream's no-AI ban, and code that didn't follow upstream contributing conventions.
-- **Fix**: Created permanent fork with upstream.yaml (exact upstream conventions), PreToolUse hook (cargo fmt/clippy enforcement), and upstream_style_review workflow phase. Fork allows AI-assisted development while enforcing upstream code quality standards.
-- **What maintainer detected**: Didn't follow contributing template, code style diverged, patterns that signal AI generation (over-documentation, unnecessary abstractions).
-- **What fork does differently**: upstream.yaml from actual code analysis, PreToolUse blocker, semantic review phase, diff minimization tracking.
+- **Immediate response**: Created permanent fork with AI-assisted development allowed. At fork creation, no upstream convention analysis existed — code was written without verifying upstream style.
+- **What maintainer detected**: Didn't follow contributing template, code style diverged, patterns that signal AI generation (over-documentation, unnecessary abstractions, hardcoded paths, mixed approaches).
+- **Subsequent fixes (2026-03-16, after critical review)**: upstream.yaml (actual code analysis), PreToolUse hook (cargo fmt/clippy blocker), upstream_style_review workflow phase, anti-patterns section, diff minimization tracking. These did NOT exist at the time of original failure.
+- **Code violations remaining**: V1-V10 identified but not yet fixed (pending #63 implementation).
 
 ## L002 — Pre-generated bindings break cross-platform builds
 

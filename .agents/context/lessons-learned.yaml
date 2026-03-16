@@ -25,21 +25,23 @@ lessons:
       Two distinct issues:
       - Policy: upstream has a strict no-AI contribution ban (AGENTS.md + PR template + repo ban threat)
       - Quality: PR did not follow upstream contributing template, code style diverged from upstream conventions, unverified Windows code included
-    fix: |
-      Created permanent fork (whisper-rs-nx) to address both:
-      - Fork allows AI-assisted development with transparent attribution
-      - Added upstream.yaml context to ensure all code follows upstream conventions
-      - Added upstream-style-check hook (PreToolUse) to block non-compliant commits
-      - Added upstream_style_review workflow phase for semantic review
+    immediate_response: |
+      Created permanent fork (whisper-rs-nx) with AI-assisted development allowed.
+      At the time of fork creation, no upstream convention analysis existed —
+      code was written without verifying upstream style, contributing template, or test requirements.
     what_maintainer_detected:
       - "Didn't follow contributing template" — PR checklist not completed
       - "Atrocious quality" — code style diverged from upstream patterns
-      - "Obviously LLM generated" — patterns that signal AI generation (over-documentation, unnecessary abstractions)
-    what_fork_does_differently:
-      - "upstream.yaml encodes exact upstream conventions from actual code"
-      - "PreToolUse hook runs cargo fmt + clippy before commit"
-      - "Semantic upstream_style_review checks for convention leakage"
-      - "Diff minimization tracked to keep fork changes minimal"
+      - "Obviously LLM generated" — patterns that signal AI generation (over-documentation, unnecessary abstractions, hardcoded paths, mixed approaches)
+    subsequent_fixes:
+      description: "Added after critical review of the fork (2026-03-16), NOT at the time of original failure"
+      items:
+        - "upstream.yaml: encodes exact upstream conventions from actual code analysis"
+        - "PreToolUse hook: runs cargo fmt + clippy, blocks non-compliant commits"
+        - "upstream_style_review workflow phase: semantic review against upstream patterns"
+        - "Anti-patterns section: documents specific 'AI slop' signals from PR #275/#272"
+        - "Diff minimization tracking: keeps fork changes minimal"
+    code_violations_remaining: "V1-V10 code violations identified but not yet fixed (pending #63 implementation)"
     reference: "upstream whisper-rs PR #275 (locked, closed as spam)"
 
   - id: L002
