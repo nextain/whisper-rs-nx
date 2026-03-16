@@ -21,6 +21,18 @@ Rust bindings for whisper.cpp — Nextain fork with cuda-dynamic and Windows MSV
 - **Upstream latest**: 0.16.0
 - **Strategy**: Track upstream versions — bump patch for fork-only changes. Next upstream sync should update to 0.16.x, then add fork patch (e.g., 0.16.1-nx).
 
+## Diff Minimization
+
+Keep fork changes as small and clean as possible relative to upstream.
+
+**Track divergence**: `git diff upstream/master..master -- src/ sys/src/ sys/build.rs Cargo.toml sys/Cargo.toml`
+
+**Rules**:
+- New features behind feature flags — don't modify default behavior
+- Platform fixes use existing upstream cfg patterns
+- No cosmetic reformatting of upstream code
+- Submodule (whisper.cpp) stays at upstream's pinned version unless intentional
+
 ## Crate Structure
 
 ```

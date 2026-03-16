@@ -15,9 +15,14 @@ Forked from [whisper-rs](https://codeberg.org/tazz4843/whisper-rs) (Unlicense).
 
 ## Why this fork exists
 
-This project is part of [Naia OS](https://github.com/nextain/naia-os), an AI-context-driven open source project. Our development methodology relies on AI-assisted coding with full context engineering (`.agents/`, `.users/`, `CLAUDE.md`).
+This project is part of [Naia OS](https://github.com/nextain/naia-os). Our development workflow includes AI-assisted coding with context engineering (`.agents/`, `.users/`, `CLAUDE.md`).
 
-The upstream whisper-rs project does not accept AI-assisted contributions. We respect that policy, but our project philosophy requires AI-context-based development — we do not rewrite AI-generated code manually to satisfy upstream policies. Therefore, this is a permanent independent fork.
+An initial contribution (cuda-dynamic) was submitted to upstream whisper-rs as PR #275 and rejected for two reasons:
+
+1. **AI policy**: upstream does not accept AI-assisted contributions
+2. **Code quality**: the submission did not follow upstream contributing conventions
+
+We created this fork to address both. The fork uses AI tools with transparent attribution, and enforces upstream code conventions via `.agents/context/upstream.yaml` and commit-time hooks to ensure code quality matches upstream standards. We respect upstream's policy and do not submit AI-assisted code to their repository.
 
 ## Usage
 

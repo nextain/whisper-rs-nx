@@ -20,6 +20,21 @@ versioning:
     Next upstream sync should update to 0.16.x, then add fork patch: 0.16.1-nx or similar.
     The -nx suffix or patch bump distinguishes fork releases from upstream.
 
+diff_minimization:
+  principle: "Keep fork changes as small and clean as possible relative to upstream"
+  tracking: |
+    Run: git diff upstream/master..master -- src/ sys/src/ sys/build.rs Cargo.toml sys/Cargo.toml
+    This shows only code divergence, excluding context files (.agents/, .users/, etc.).
+  current_divergence:
+    code_commits: 4
+    files_changed: "sys/build.rs, sys/src/bindings.rs, src/lib.rs, src/whisper_ctx.rs, Cargo.toml, sys/Cargo.toml, examples/test_fallback.rs"
+    context_only: ".agents/, .users/, CLAUDE.md, AGENTS.md, GEMINI.md, CONTRIBUTING.md, README.md, BUILDING.md, CHANGELOG.md, .claude/, .github/"
+  rules:
+    - "New features go behind feature flags — do not modify default behavior"
+    - "Platform fixes use existing upstream cfg patterns"
+    - "No cosmetic reformatting of upstream code"
+    - "Submodule (whisper.cpp) stays at upstream's pinned version unless intentional"
+
 crates:
   whisper-rs-nx:
     path: "."

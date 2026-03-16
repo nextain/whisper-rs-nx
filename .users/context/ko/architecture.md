@@ -21,6 +21,18 @@ whisper.cpp를 위한 Rust 바인딩 — cuda-dynamic과 Windows MSVC 지원이 
 - **upstream 최신**: 0.16.0
 - **전략**: upstream 버전을 추적하고 포크 전용 변경에는 패치 버전 증가. 다음 upstream 동기화 시 0.16.x로 업데이트 후 포크 패치 추가 (예: 0.16.1-nx).
 
+## Diff 최소화
+
+포크 변경을 upstream 대비 최소한으로 유지.
+
+**변경량 추적**: `git diff upstream/master..master -- src/ sys/src/ sys/build.rs Cargo.toml sys/Cargo.toml`
+
+**규칙**:
+- 새 기능은 feature flag 뒤에 — 기본 동작 수정 금지
+- 플랫폼 수정은 기존 upstream cfg 패턴 사용
+- upstream 코드의 외형적 리포맷 금지
+- 서브모듈(whisper.cpp)은 의도적이지 않으면 upstream 고정 버전 유지
+
 ## 크레이트 구조
 
 ```

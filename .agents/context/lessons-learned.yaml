@@ -16,11 +16,31 @@ lessons:
   - id: L001
     date: "2026-03-15"
     category: fork-management
-    title: "Upstream rejection of AI contributions motivated this fork"
-    problem: "Upstream whisper-rs (codeberg.org/tazz4843/whisper-rs) does not accept AI-assisted contributions. This blocks cuda-dynamic and Windows MSVC patches from being upstreamed."
-    root_cause: "Anti-AI contribution policy in upstream project."
-    fix: "Created permanent fork (whisper-rs-nx) with clear upstream attribution. Maintain our own release cycle."
-    reference: "README.md fork rationale"
+    title: "Upstream PR #275 rejected — both AI policy and code quality cited"
+    problem: |
+      Submitted cuda-dynamic PR to upstream whisper-rs. Rejected for two reasons:
+      1. AI policy violation — PR template requires "no GenAI" declaration
+      2. Code quality — maintainer described it as "atrocious quality" and "obviously LLM generated"
+    root_cause: |
+      Two distinct issues:
+      - Policy: upstream has a strict no-AI contribution ban (AGENTS.md + PR template + repo ban threat)
+      - Quality: PR did not follow upstream contributing template, code style diverged from upstream conventions, unverified Windows code included
+    fix: |
+      Created permanent fork (whisper-rs-nx) to address both:
+      - Fork allows AI-assisted development with transparent attribution
+      - Added upstream.yaml context to ensure all code follows upstream conventions
+      - Added upstream-style-check hook (PreToolUse) to block non-compliant commits
+      - Added upstream_style_review workflow phase for semantic review
+    what_maintainer_detected:
+      - "Didn't follow contributing template" — PR checklist not completed
+      - "Atrocious quality" — code style diverged from upstream patterns
+      - "Obviously LLM generated" — patterns that signal AI generation (over-documentation, unnecessary abstractions)
+    what_fork_does_differently:
+      - "upstream.yaml encodes exact upstream conventions from actual code"
+      - "PreToolUse hook runs cargo fmt + clippy before commit"
+      - "Semantic upstream_style_review checks for convention leakage"
+      - "Diff minimization tracked to keep fork changes minimal"
+    reference: "upstream whisper-rs PR #275 (locked, closed as spam)"
 
   - id: L002
     date: "2026-03-15"

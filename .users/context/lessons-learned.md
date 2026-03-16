@@ -7,13 +7,15 @@ Accumulated lessons from development cycles.
 **Korean mirror**: `.users/context/ko/lessons-learned.md`
 **AI context (SoT)**: `.agents/context/lessons-learned.yaml`
 
-## L001 — Upstream rejection of AI contributions motivated this fork
+## L001 — Upstream PR #275 rejected — both AI policy and code quality cited
 
 - **Date**: 2026-03-15
 - **Category**: Fork management
-- **Problem**: Upstream whisper-rs does not accept AI-assisted contributions. This blocks cuda-dynamic and Windows MSVC patches from being upstreamed.
-- **Root cause**: Anti-AI contribution policy in upstream project.
-- **Fix**: Created permanent fork (whisper-rs-nx) with clear upstream attribution. Maintain our own release cycle.
+- **Problem**: Submitted cuda-dynamic PR to upstream. Rejected for (1) AI policy violation and (2) code quality issues — maintainer described it as "atrocious quality" and "obviously LLM generated".
+- **Root cause**: Two issues — upstream's no-AI ban, and code that didn't follow upstream contributing conventions.
+- **Fix**: Created permanent fork with upstream.yaml (exact upstream conventions), PreToolUse hook (cargo fmt/clippy enforcement), and upstream_style_review workflow phase. Fork allows AI-assisted development while enforcing upstream code quality standards.
+- **What maintainer detected**: Didn't follow contributing template, code style diverged, patterns that signal AI generation (over-documentation, unnecessary abstractions).
+- **What fork does differently**: upstream.yaml from actual code analysis, PreToolUse blocker, semantic review phase, diff minimization tracking.
 
 ## L002 — Pre-generated bindings break cross-platform builds
 
