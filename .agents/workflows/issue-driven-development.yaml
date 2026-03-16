@@ -205,6 +205,11 @@ phases:
       - "Check if .users/ needs updates → update (1:1 mirror)"
       - "Check if entry points (CLAUDE.md/AGENTS.md/GEMINI.md) need updates"
       - "Record lessons learned if applicable"
+      - "  If recording lessons: verify temporal accuracy —"
+      - "    problem/root_cause must describe the state AT THE TIME of failure"
+      - "    immediate_response = what was done right after"
+      - "    subsequent_fixes = what was added later (with explicit dates)"
+      - "    NEVER project current-state artifacts onto past events"
       - "Present sync summary to user for confirmation"
 
   sync_verify:

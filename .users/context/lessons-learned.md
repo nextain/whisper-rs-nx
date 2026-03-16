@@ -7,6 +7,8 @@ Accumulated lessons from development cycles.
 **Korean mirror**: `.users/context/ko/lessons-learned.md`
 **AI context (SoT)**: `.agents/context/lessons-learned.yaml`
 
+**Temporal accuracy rule**: Every entry must be accurate to its time period. problem/root_cause = state at the time of failure. immediate_response = right after. subsequent_fixes = later, with explicit dates. Never project current-state artifacts onto past events.
+
 ## L001 — Upstream PR #275 rejected — both AI policy and code quality cited
 
 - **Date**: 2026-03-15

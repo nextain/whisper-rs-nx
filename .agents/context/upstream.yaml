@@ -103,6 +103,13 @@ code_style:
         why: "Upstream expects tested contributions"
       - pattern: "Re-solving problems upstream already solved"
         why: "has_libclang() when WHISPER_DONT_GENERATE_BINDINGS already exists"
+    ai_behavioral_traps:
+      - pattern: "Projecting current state onto past events"
+        why: "When writing lessons-learned or changelogs, AI describes post-fix tools as if they existed during the original failure. Readers cannot tell what was the actual timeline."
+        prevention: "Use temporal fields: immediate_response (at the time) vs subsequent_fixes (later, with dates)"
+      - pattern: "Autonomous fixing without user judgment"
+        why: "AI reads criticism and immediately fixes everything without letting the user decide which items to accept, reject, or approach differently. Violates no_autonomous_development principle."
+        prevention: "Present each finding with assessment, wait for user decision before acting"
 
 # ── Platform Patterns ─────────────────────────────────────────
 

@@ -7,6 +7,8 @@
 **영문 미러**: `.users/context/lessons-learned.md`
 **AI 컨텍스트 (SoT)**: `.agents/context/lessons-learned.yaml`
 
+**시간축 정확성 규칙**: 모든 항목은 시간 기준으로 정확해야 한다. problem/root_cause = 실패 당시 상태. immediate_response = 직후 대응. subsequent_fixes = 이후 수정 (날짜 명시). 현재 상태를 과거 사건에 투영하지 않는다.
+
 ## L001 — Upstream PR #275 거절 — AI 정책과 코드 품질 모두 지적됨
 
 - **날짜**: 2026-03-15

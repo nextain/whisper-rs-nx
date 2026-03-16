@@ -4,6 +4,14 @@
 #
 # Accumulated lessons from development cycles.
 # Read during INVESTIGATE phase. Written during SYNC phase.
+#
+# TEMPORAL ACCURACY RULE:
+# Every lesson entry MUST be accurate to its time period.
+# - problem/root_cause: describe the state AT THE TIME of the failure
+# - immediate_response: what was done RIGHT AFTER the failure
+# - subsequent_fixes: what was added LATER, with explicit dates
+# NEVER describe post-fix artifacts as if they existed during the failure.
+# This is a known AI tendency — projecting current state onto past events.
 
 version: 1
 name: lessons-learned

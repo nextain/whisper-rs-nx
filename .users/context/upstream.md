@@ -63,6 +63,11 @@ Detected in PR #275 and #272 rejections:
 - **Shipping unverified code** (`// NOTE: untested`) — upstream expects tested contributions
 - **Re-solving upstream's solutions** (`has_libclang()` when `WHISPER_DONT_GENERATE_BINDINGS` exists)
 
+### AI Behavioral Traps
+
+- **Projecting current state onto past events**: When writing lessons-learned or changelogs, AI describes post-fix tools as if they existed during the original failure. Prevention: use temporal fields (immediate_response vs subsequent_fixes with dates).
+- **Autonomous fixing without user judgment**: AI reads criticism and fixes everything without letting the user decide which items to accept/reject. Prevention: present each finding with assessment, wait for user decision.
+
 ## Platform Patterns
 
 **Principle**: Minimal platform code in Rust. whisper.cpp handles most via CMake.

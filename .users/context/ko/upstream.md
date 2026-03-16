@@ -63,6 +63,11 @@ PR #275, #272 거절에서 발견:
 - **미검증 코드 출시** (`// NOTE: untested`) — upstream은 테스트된 기여를 기대
 - **upstream이 해결한 문제 재해결** (`has_libclang()` — `WHISPER_DONT_GENERATE_BINDINGS`가 이미 있음)
 
+### AI 행동 함정
+
+- **현재 상태를 과거에 투영**: lessons-learned이나 changelog 작성 시, 사후 수정 도구를 원래 실패 시점에 있었던 것처럼 서술. 방지: 시간축 필드 분리 (immediate_response vs subsequent_fixes + 날짜 명시).
+- **사용자 판단 없이 자율 수정**: AI가 비판을 읽고 사용자의 수용/거부 판단을 기다리지 않고 전부 수정. 방지: 각 항목별 평가를 제시하고 사용자 결정을 기다린다.
+
 ## 플랫폼 패턴
 
 **원칙**: Rust 래퍼의 플랫폼 코드는 최소화. whisper.cpp가 CMake로 대부분 처리.
